@@ -25,8 +25,8 @@ const _ray = new Ray();
 const _plane = new Plane();
 const _TILT_LIMIT = Math.cos(70 * MathUtils.DEG2RAD);
 
-const minPan = new Vector3(-3, -1, -4);
-const maxPan = new Vector3(2, 8, 8);
+const minPan = new Vector3(-Infinity, -Infinity, -Infinity);
+const maxPan = new Vector3(Infinity, Infinity, Infinity);
 
 const _v = new Vector3();
 const _twoPI = 2 * Math.PI;
@@ -41,7 +41,7 @@ const _STATE = {
   TOUCH_DOLLY_PAN: 5,
   TOUCH_DOLLY_ROTATE: 6,
 };
-const _EPS = 0.000001;
+const _EPS = 0.00001;
 
 class OrbitControls extends Controls {
   constructor(object, domElement = null) {
