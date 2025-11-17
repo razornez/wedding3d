@@ -1,0 +1,21 @@
+$base-dark-purple: #bfa76a;
+$base-purple: #d8c28d;
+$base-purple-200: #f3e9c8;
+$base-pink: #fdf5e6;
+$base-light-purple: #fffaf0; 
+
+$base-dark-purple-2: #2f2a1f;
+$base-purple-2: #6a5d3a;
+$base-purple-200-2: #8d7c52;
+$base-pink-2: #a89263;
+$base-light-purple-2: #403520;
+
+$base-black: #090909;
+$base-white: #fdfdfd;
+
+// Mixins
+@mixin centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

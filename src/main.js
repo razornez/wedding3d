@@ -25,6 +25,7 @@ let rightBirdWing3;
 let birdBody3;
 let birdBody;
 let leafObjects = [];
+const navButtons = document.querySelectorAll(".nav-button");
 /**  -------------------------- Audio setup -------------------------- */
 
 // Background Music
@@ -57,7 +58,7 @@ const buttonSounds = {
   }),
 };
 
-/**  -------------------------- Scene setup -------------------------- */
+/** -------------------------- Scene setup -------------------------- */
 const canvas = document.querySelector("#experience-canvas");
 const sizes = {
   width: window.innerWidth,
@@ -87,37 +88,40 @@ controls.maxDistance = Infinity; // Ganti 65 dengan Infinity agar zoom out tidak
 controls.minPolarAngle = 0;   // Biarkan 0 untuk melihat dari atas.
 controls.maxPolarAngle = Infinity; // Ganti Math.PI / 2 menjadi Math.PI (180 derajat) untuk melihat hingga ke bawah objek.
 controls.minAzimuthAngle = -Infinity; // Hapus batasan horizontal kiri
-controls.maxAzimuthAngle = Infinity;  // Hapus batasan horizontal kanan (Ini memberi putaran 360 derajat penuh)
+controls.maxAzimuthAngle = Infinity;  // Hapus batasan batasan horizontal kanan (Ini memberi putaran 360 derajat penuh)
 
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
+const MOBILE_RESOLUTION = 768;
+
+const HOME_POSITION = new THREE.Vector3(-8.897775230466557, 7.661037396040191, 44.3284156350184);
+const HOME_TARGET = new THREE.Vector3(-5.609463049876454, -4.840251888259694, 3.2020049420625756);
+
+camera.position.copy(HOME_POSITION);
+controls.target.copy(HOME_TARGET);
 controls.update();
 
-//Set starting camera position
-if (window.innerWidth < 768) {
-  camera.position.set(
-    42.37040363900147,
-    14.018476147584705,
-    31.37040363900147
-  );
-  controls.target.set(
-    -0.08206262548844094,
-    3.3119233527087255,
-    1.2433922282864018
-  );
-} else {
-  camera.position.set( 
-    -8.897775230466557,
-    7.661037396040191,
-    44.3284156350184
-  );
-  controls.target.set(
-    -5.609463049876454,
-    -4.840251888259694, 
-    3.2020049420625756
-  );
-}
+// --- Posisi Story (Point E, F, G, H) ---
+// Story Point E (Start/Restart)
+const S_E_POS = new THREE.Vector3(-8.525656049894154, 29.98472634516598, -28.30948852275964);
+const S_E_TARGET = new THREE.Vector3(-14.55965486069327, 32.043256163451034, -48.34318720155553);
+
+// Story Point F
+const S_F_POS = new THREE.Vector3(-0.7316092379410435, 30.66503009104131, -26.982871287326073);
+const S_F_TARGET = new THREE.Vector3(-7.751342090318966, 33.059848162127636, -50.28934137122706);
+
+// Story Point G
+const S_G_POS = new THREE.Vector3(-3.877814937935634, 21.151841366089997, -22.743071743771157);
+const S_G_TARGET = new THREE.Vector3(-12.065285825677778, 23.945039291252648, -49.92659130510777);
+
+// Story Point H (End)
+const S_H_POS = new THREE.Vector3(2.1158958117217113, 24.000217622531167, -31.027866708629222);
+const S_H_TARGET = new THREE.Vector3(-4.219413087549358, 26.161540931686577, -52.061955959349845);
+
+// Variabel Kontrol
+let isStoryPlaying = false;
+let storyTimeline = null;
 
 window.addEventListener("resize", () => {
   sizes.width = window.innerWidth;
@@ -130,9 +134,10 @@ window.addEventListener("resize", () => {
   // Update renderer
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
 });
 
-/**  -------------------------- Modal Stuff -------------------------- */
+/** -------------------------- Modal Stuff -------------------------- */
 const modals = {
   work: document.querySelector(".modal.work"),
   about: document.querySelector(".modal.about"),
@@ -210,6 +215,60 @@ document.querySelectorAll(".modal-exit-button").forEach((button) => {
   );
 });
 
+navButtons.forEach(button => {
+  const modalType = button.getAttribute('data-modal');
+  
+  // Helper untuk menutup modal yang terbuka
+  const closeOpenModal = () => {
+      const currentOpenModal = document.querySelector('.modal[style*="display: block"]');
+      if(currentOpenModal) { hideModal(currentOpenModal); }
+  };
+
+  if (modalType === 'wedding') { 
+      button.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeOpenModal();
+          startLoopingRotation();
+      });
+  } 
+  
+  else if (modalType === 'story') { 
+      button.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeOpenModal();
+          playStoryAnimation();
+      });
+  } 
+  
+  // 3. Tombol LOCATION (data-modal="contact")
+  else if (modalType === 'location') { 
+      button.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeOpenModal();
+          showModal(modals.contact);
+      });
+  }
+  
+  if (button.classList.contains('message')) {
+       button.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeOpenModal();
+          
+          controls.enabled = false;
+          gsap.to(camera.position, {
+              x: HOME_POSITION.x, y: HOME_POSITION.y, z: HOME_POSITION.z, 
+              duration: 1.5, ease: "power2.inOut"
+          });
+          gsap.to(controls.target, {
+              x: HOME_TARGET.x, y: HOME_TARGET.y, z: HOME_TARGET.z, 
+              duration: 1.5, ease: "power2.inOut", 
+              onUpdate: () => controls.update(),
+              onComplete: () => { controls.enabled = true; }
+          });
+      });
+  }
+});
+
 let isModalOpen = true;
 
 const showModal = (modal) => {
@@ -268,7 +327,7 @@ const hideModal = (modal) => {
   });
 };
 
-/**  -------------------------- Loading Screen & Intro Animation -------------------------- */
+/** -------------------------- Loading Screen & Intro Animation -------------------------- */
 
 setTimeout(() => {
   document.querySelectorAll(".instructions").forEach((el) => {
@@ -314,7 +373,7 @@ manager.onLoad = function () {
     toggleFavicons?.();
     backgroundMusic?.play();
     playReveal?.();
-    playFlowerAnimation();
+    // playIntroAnimation();
   }
 
   loadingScreenButton.addEventListener("mouseenter", () => {
@@ -354,7 +413,7 @@ function playReveal() {
       ease: "back.in(1.8)",
       onComplete: () => {
         isModalOpen = false;
-        playIntroAnimation();
+        // playIntroAnimation();
         loadingScreen.remove();
       },
     },
@@ -362,11 +421,286 @@ function playReveal() {
   );
 }
 
-function playIntroAnimation() {
-  
+// === START: FUNGSI ANIMASI KAMERA BARU ===
+
+let loopTimeline;
+// Asumsi: let introTimeline; dideklarasikan secara global/accessible
+// Asumsi: let controls; dideklarasikan secara global/accessible
+
+function startLoopingRotation() {
+    const P_C = new THREE.Vector3(-1.203887804350924, 6.355986850477607, 16.360666899635156);
+    const P_D = new THREE.Vector3(4.933312240836284, 6.069414462610857, 14.738033468252114);
+    const T_CD = new THREE.Vector3(-1.96467613412305, 0.5190966535008179, 2.0712027160863795);
+    const Z_OFFSET = 5; // Jauhkan kamera sejauh 7 unit di sumbu Z
+    const X_OFFSET = 2.5;  // Geser kamera ke KANAN sejauh 2 unit di sumbu X
+    const Y_ADJUSTMENT = 3; // Turunkan Target (T_CD) sejauh 3 unit (membuat objek terlihat lebih rendah/di tengah)
+
+    if (window.innerWidth < MOBILE_RESOLUTION) {
+      // P_C (Kamera Awal Loop)
+      P_C.x += X_OFFSET;
+      P_C.z += Z_OFFSET;
+      
+      P_D.x += X_OFFSET;
+      P_D.z += Z_OFFSET;
+      
+      // Terapkan Offset Z, X, DAN Y_ADJUSTMENT ke T_CD (Target Pandangan)
+      T_CD.x += X_OFFSET;
+      T_CD.z += Z_OFFSET;
+      T_CD.y += Y_ADJUSTMENT;
+    }
+
+    // 1. CLEANUP: Hentikan animasi yang mungkin sedang berjalan
+    if (introTimeline) {
+      introTimeline.kill();
+    }
+    if (loopTimeline) {
+        loopTimeline.kill();
+    }
+    // Tambahkan cleanup untuk Story Timeline
+    if (storyTimeline) {
+        storyTimeline.kill();
+    }
+    if (isStoryPlaying) {
+        isStoryPlaying = false;
+    }
+
+    // Nonaktifkan kontrol Orbit saat transisi dimulai
+    controls.enabled = false;
+
+    playFlowerAnimation();
+    
+    // 2. TRANSISI HALUS KE POINT C (Posisi Mulai Loop)
+    // Transisi ke P_C selama 1.5 detik.
+    gsap.to(camera.position, {
+        x: P_C.x, y: P_C.y, z: P_C.z, 
+        duration: 1.5, ease: "power2.inOut" 
+    });
+    
+    gsap.to(controls.target, {
+        x: T_CD.x, y: T_CD.y, z: T_CD.z, 
+        duration: 1.5, ease: "power2.inOut",
+        onUpdate: () => controls.update(),
+        
+        // 3. MULAI LOOP setelah transisi ke P_C selesai
+        onComplete: () => {
+            // Aktifkan kembali kontrol
+            controls.enabled = true;
+            
+            loopTimeline = gsap.timeline({
+                repeat: -1,
+                defaults: { 
+                    duration: 6.0,
+                    ease: "sine.inOut"
+                }
+            });
+            
+            // ROTATE (C -> D)
+            loopTimeline.to(camera.position, {
+                x: P_D.x, y: P_D.y, z: P_D.z,
+            })
+            .to(controls.target, {
+                x: T_CD.x, y: T_CD.y, z: T_CD.z,
+                onUpdate: () => controls.update(),
+            }, "<"); 
+
+            // ROTATE BACK (D -> C)
+            loopTimeline.to(camera.position, {
+                x: P_C.x, y: P_C.y, z: P_C.z,
+            })
+            .to(controls.target, {
+                x: T_CD.x, y: T_CD.y, z: T_CD.z,
+                onUpdate: () => controls.update(),
+            }, "<");
+        }
+    });
 }
 
-/**  -------------------------- Loaders & Texture Preparations -------------------------- */
+let introTimeline; 
+
+function playIntroAnimation() {
+  const P_A = new THREE.Vector3(-8.897775230466557, 7.661037396040191, 44.3284156350184);
+  const T_A = new THREE.Vector3(-5.609463049876454, -4.840251888259694, 3.2020049420625756);
+  
+  // Posisi B (HOME VIEW)
+  const P_B = HOME_POSITION; 
+  const T_B = HOME_TARGET; 
+  
+  // 1. SET POSISI AWAL (Point A)
+  camera.position.copy(P_A);
+  controls.target.copy(T_A);
+  controls.update();
+
+  // Nonaktifkan kontrol selama animasi intro
+  controls.enabled = false;
+
+  // Nonaktifkan kontrol selama animasi intro
+  controls.enabled = false;
+
+  introTimeline = gsap.timeline({ // <<< Pastikan disimpan ke variabel global
+    defaults: { duration: 3.0, ease: "power2.inOut" }, 
+    onComplete: () => {
+      // Setelah intro selesai, mulai looping animasi
+      startLoopingRotation();
+      // Kontrol akan diaktifkan di dalam startLoopingRotation()
+    }
+  });
+
+  // JUMP 1 (A -> B, Durasi 1.0s)
+  introTimeline.to(camera.position, {
+    x: P_B.x,
+    y: P_B.y,
+    z: P_B.z,
+  })
+  .to(controls.target, {
+    x: T_B.x,
+    y: T_B.y,
+    z: T_B.z,
+    onUpdate: () => controls.update(),
+  }, "<");
+}
+
+// === END: FUNGSI ANIMASI KAMERA BARU ===
+
+function playStoryAnimation() {
+  const Z_OFFSET = 5;
+  const X_OFFSET = 1.5;  
+  // --- Global Cleanup: Hentikan animasi lain yang mungkin berjalan ---
+  if (introTimeline) {
+      introTimeline.kill();
+  }
+  if (loopTimeline) {
+      loopTimeline.kill();
+  }
+  
+  // Logika restart storyTimeline (jika tombol diklik ulang)
+  if (isStoryPlaying && storyTimeline) {
+      storyTimeline.kill();
+  }
+  
+  isStoryPlaying = true;
+  controls.enabled = false; // Matikan kontrol Orbit saat memulai animasi
+  
+  // --- DEKLARASI POSISI LOKAL DAN PENYESUAIAN MOBILE ---
+  // Salin posisi default ke variabel lokal
+  let P_E = S_E_POS.clone();
+  let T_E = S_E_TARGET.clone();
+  let P_F = S_F_POS.clone();
+  let T_F = S_F_TARGET.clone();
+  let P_G = S_G_POS.clone();
+  let T_G = S_G_TARGET.clone();
+  let P_H = S_H_POS.clone();
+  let T_H = S_H_TARGET.clone();
+
+  // Cek resolusi mobile dan terapkan Z_OFFSET
+  if (window.innerWidth < MOBILE_RESOLUTION) {
+    P_E.z += Z_OFFSET;
+    P_E.x += X_OFFSET; 
+    T_E.z += Z_OFFSET;
+    T_E.x += X_OFFSET; 
+    
+    P_F.z += Z_OFFSET;
+    P_F.x += X_OFFSET; 
+    T_F.z += Z_OFFSET;
+    T_F.x += X_OFFSET; 
+    
+    P_G.z += Z_OFFSET;
+    P_G.x += X_OFFSET; 
+    T_G.z += Z_OFFSET;
+    T_G.x += X_OFFSET; 
+    
+    P_H.z += Z_OFFSET;
+    P_H.x += X_OFFSET; 
+    T_H.z += Z_OFFSET;
+    T_H.x += X_OFFSET;
+  }
+  // -------------------------------------------------------------------
+  
+  // Durasi transisi awal yang diinginkan
+  const initialTransitionDuration = 3.5; 
+  
+  // Buat timeline UTAMA (Dideklarasikan hanya sekali)
+  storyTimeline = gsap.timeline({
+      defaults: { duration: 1.0, ease: "power2.inOut" }, 
+      onComplete: () => {
+          isStoryPlaying = false;
+          controls.enabled = true; // Aktifkan kontrol hanya di akhir urutan
+      }
+  });
+
+  // 1. TRANSISI AWAL (Dari posisi kamera saat ini ke Point E yang disesuaikan)
+  storyTimeline.to(camera.position, {
+      x: P_E.x, y: P_E.y, z: P_E.z, // Menggunakan P_E yang sudah di-offset
+      duration: initialTransitionDuration
+  }, 0)
+  .to(controls.target, {
+      x: T_E.x, y: T_E.y, z: T_E.z, // Menggunakan T_E yang sudah di-offset
+      duration: initialTransitionDuration,
+      onUpdate: () => controls.update(),
+  }, 0); 
+
+  
+  // --- SEQ 1: Hold & Idle Movement di Point E (4s) ---
+  storyTimeline.to(controls.target, {
+      x: T_E.x + 0.5, // Pindah target sedikit ke samping (menggunakan T_E yang sudah di-offset sebagai basis)
+      y: T_E.y + 0.2, // Pindah target sedikit ke atas
+      duration: 4.0, 
+      ease: "sine.inOut",
+      onUpdate: () => controls.update(),
+  }, ">"); 
+
+  
+  // --- SEQ 2: Transition E -> F (1s move + 4s hold) ---
+  storyTimeline.to(camera.position, {
+      x: P_F.x, y: P_F.y, z: P_F.z, // Menggunakan P_F yang sudah di-offset
+  }, ">") 
+  .to(controls.target, {
+      x: T_F.x, y: T_F.y, z: T_F.z, // Menggunakan T_F yang sudah di-offset
+      onUpdate: () => controls.update(),
+  }, "<")
+  // Hold & Idle Movement di Point F (4s)
+  .to(controls.target, {
+      x: T_F.x - 0.5, 
+      z: T_F.z - 0.2, 
+      duration: 4.0, 
+      ease: "sine.inOut",
+      onUpdate: () => controls.update(),
+  }, ">");
+
+  // --- SEQ 3: Transition F -> G (1s move + 4s hold) ---
+  storyTimeline.to(camera.position, {
+      x: P_G.x, y: P_G.y, z: P_G.z, // Menggunakan P_G yang sudah di-offset
+  }, ">")
+  .to(controls.target, {
+      x: T_G.x, y: T_G.y, z: T_G.z, // Menggunakan T_G yang sudah di-offset
+      onUpdate: () => controls.update(),
+  }, "<")
+  // Hold & Idle Movement di Point G (4s)
+  .to(camera.position, { 
+      x: P_G.x + 0.3, 
+      y: P_G.y - 0.3, 
+      duration: 4.0, 
+      ease: "sine.inOut",
+  }, ">");
+
+  // --- SEQ 4: Transition G -> H (1s move + 4s hold) ---
+  storyTimeline.to(camera.position, {
+      x: P_H.x, y: P_H.y, z: P_H.z, // Menggunakan P_H yang sudah di-offset
+  }, ">")
+  .to(controls.target, {
+      x: T_H.x, y: T_H.y, z: T_H.z, // Menggunakan T_H yang sudah di-offset
+      onUpdate: () => controls.update(),
+  }, "<")
+  // Hold & Idle Movement di Point H (4s)
+  .to(controls.target, { 
+      x: T_H.x + 0.4, 
+      y: T_H.y + 0.1, 
+      duration: 4.0, 
+      ease: "sine.inOut",
+      onUpdate: () => controls.update(),
+  }, ">");
+}
+
+/** -------------------------- Loaders & Texture Preparations -------------------------- */
 const textureLoader = new THREE.TextureLoader();
 
 const dracoLoader = new DRACOLoader();
@@ -475,7 +809,7 @@ videoTexture.flipY = false;
 videoTexture.center.set(0.5, 0.5);
 videoTexture.rotation = Math.PI / 2;
 
-/**  -------------------------- Model and Mesh Setup -------------------------- */
+/** -------------------------- Model and Mesh Setup -------------------------- */
 
 // LOL DO NOT DO THIS USE A FUNCTION TO AUTOMATE THIS PROCESS HAHAHAAHAHAHAHAHAHA
 let hourHand;
@@ -581,48 +915,14 @@ loader.load("/models/wedding_model.glb", (glb) => {
   scene.add(glb.scene);
 });
 
-/**  -------------------------- Raycaster setup -------------------------- */
+/** -------------------------- Raycaster setup -------------------------- */
 
 const raycasterObjects = [];
 let currentIntersects = [];
 let currentHoveredObject = null;
 
-const socialLinks = {
-  GitHub: "https://github.com/#",
-  YouTube: "#",
-  Twitter: "https://wa.me/6285889963822",
-};
-
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
-
-function handleRaycasterInteraction() {
-  if (currentIntersects.length > 0) {
-    const object = currentIntersects[0].object;
-
-    if (object.name.includes("Button")) {
-      buttonSounds.click.play();
-    }
-
-    Object.entries(socialLinks).forEach(([key, url]) => {
-      if (object.name.includes(key)) {
-        const newWindow = window.open();
-        newWindow.opener = null;
-        newWindow.location = url;
-        newWindow.target = "_blank";
-        newWindow.rel = "noopener noreferrer";
-      }
-    });
-
-    if (object.name.includes("Work_Button")) {
-      showModal(modals.work);
-    } else if (object.name.includes("About_Button")) {
-      showModal(modals.about);
-    } else if (object.name.includes("Contact_Button")) {
-      showModal(modals.contact);
-    }
-  }
-}
 
 function playHoverAnimation(object, isHovering) {
   let scale = 1.4;
@@ -744,21 +1044,13 @@ window.addEventListener(
   { passive: false }
 );
 
-window.addEventListener(
-  "touchend",
-  (e) => {
-    if (isModalOpen) return;
-    e.preventDefault();
-    handleRaycasterInteraction();
-  },
-  { passive: false }
-);
-
-window.addEventListener("click", handleRaycasterInteraction);
-
 // Other Event Listeners
 const themeToggleButton = document.querySelector(".theme-toggle-button");
 const muteToggleButton = document.querySelector(".mute-toggle-button");
+const weddingButton = document.querySelector("#wedding");
+const storyButton = document.querySelector("#story");
+const locationButton = document.querySelector("#location");
+const messageButton = document.querySelector("#message");
 const sunSvg = document.querySelector(".sun-svg");
 const moonSvg = document.querySelector(".moon-svg");
 const soundOffSvg = document.querySelector(".sound-off-svg");
@@ -827,6 +1119,26 @@ muteToggleButton.addEventListener(
     backgroundMusic.volume(BACKGROUND_MUSIC_VOLUME);
     touchHappened = true;
     handleMuteToggle(e);
+  },
+  { passive: false }
+);
+
+weddingButton.addEventListener(
+  "touchend",
+  (e) => {
+    backgroundMusic.volume(0);
+    if (touchHappened) return;
+    playIntroAnimation();(e);
+  },
+  { passive: false }
+);
+
+storyButton.addEventListener(
+  "touchend",
+  (e) => {
+    backgroundMusic.volume(0);
+    if (touchHappened) return;
+    playStoryAnimation();(e);
   },
   { passive: false }
 );
@@ -941,7 +1253,7 @@ themeToggleButton.addEventListener(
   { passive: false }
 );
 
-/**  -------------------------- Render and Animations Stuff -------------------------- */
+/** -------------------------- Render and Animations Stuff -------------------------- */
 const clock = new THREE.Clock();
 
 function breatheAnimation(objects) {
@@ -1119,8 +1431,8 @@ function fallAnimation(objects) {
 
 const render = (timestamp) => {
   // --- DEBUGGING KAMERA DI SINI ---
-  console.log("Camera Position:", camera.position);
-  console.log("Controls Target:", controls.target);
+  // console.log("Camera Position:", camera.position);
+  // console.log("Controls Target:", controls.target);
 
   const elapsedTime = clock.getElapsedTime(); 
 
