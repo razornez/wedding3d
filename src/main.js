@@ -373,7 +373,7 @@ manager.onLoad = function () {
     toggleFavicons?.();
     backgroundMusic?.play();
     playReveal?.();
-    // playIntroAnimation();
+    playIntroAnimation();
   }
 
   loadingScreenButton.addEventListener("mouseenter", () => {
