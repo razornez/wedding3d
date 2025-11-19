@@ -7,6 +7,8 @@ import { OrbitControls } from "./utils/OrbitControls.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+import smokeVertexShader from "./shaders/smoke/vertex.glsl";
+import smokeFragmentShader from "./shaders/smoke/fragment.glsl";
 import themeVertexShader from "./shaders/theme/vertex.glsl";
 import themeFragmentShader from "./shaders/theme/fragment.glsl";
 
@@ -26,6 +28,7 @@ let birdBody3;
 let birdBody;
 let leafObjects = [];
 const navButtons = document.querySelectorAll(".nav-button");
+let coffeePosition;
 /**  -------------------------- Audio setup -------------------------- */
 
 // Background Music
@@ -35,7 +38,7 @@ const BACKGROUND_MUSIC_VOLUME = 0.8;
 const FADED_VOLUME = 0;
 
 // Generate a random number between 1 and 6
-const randomIndex = Math.floor(Math.random() * 6) + 1;
+const randomIndex = 1;
 
 // Build the path to the randomly selected audio file
 const randomAudioSrc = `/audio/music/audio${randomIndex}.mp3`;
@@ -139,10 +142,9 @@ window.addEventListener("resize", () => {
 
 /** -------------------------- Modal Stuff -------------------------- */
 const modals = {
-  work: document.querySelector(".modal.work"),
-  about: document.querySelector(".modal.about"),
-  contact: document.querySelector(".modal.contact"),
+  location: document.querySelector(".modal.location"),
 };
+// ---
 
 const overlay = document.querySelector(".overlay");
 
@@ -240,12 +242,11 @@ navButtons.forEach(button => {
       });
   } 
   
-  // 3. Tombol LOCATION (data-modal="contact")
   else if (modalType === 'location') { 
       button.addEventListener('click', (e) => {
           e.preventDefault();
           closeOpenModal();
-          showModal(modals.contact);
+          showModal(modals.location);
       });
   }
   
@@ -709,33 +710,27 @@ dracoLoader.setDecoderPath("/draco/");
 const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
 
-const textureMap = {
-  First: {
-    day: "/textures/room/day/first_texture_set_day.webp",
-    night: "/textures/room/night/first_texture_set_night.webp",
-  },
-  Second: {
-    day: "/textures/room/day/second_texture_set_day.webp",
-    night: "/textures/room/night/second_texture_set_night.webp",
-  },
-  Third: {
-    day: "/textures/room/day/third_texture_set_day.webp",
-    night: "/textures/room/night/third_texture_set_night.webp",
-  },
-  Fourth: {
-    day: "/textures/room/day/fourth_texture_set_day.webp",
-    night: "/textures/room/night/fourth_texture_set_night.webp",
-  },
-  Fifth: {
-    day: "/textures/room/day/fifth_texture_set_day.webp",
-    night: "/textures/room/night/fifth_texture_set_night.webp",
-  },
-};
+const environmentMap = new THREE.CubeTextureLoader()
+  .setPath("textures/skybox/")
+  .load(["px.webp", "nx.webp", "py.webp", "ny.webp", "pz.webp", "nz.webp"]);
+  const isMobile = window.innerWidth < 768;
+  const sizePath = isMobile ? "2048/" : "";
 
-const loadedTextures = {
-  day: {},
-  night: {},
-};
+  const textureNames = ["first", "second", "third", "fourth", "fifth"];
+
+  const textureMap = textureNames.reduce((map, name, index) => {
+    const key = name.charAt(0).toUpperCase() + name.slice(1);
+    map[key] = {
+      day: `/textures/room/day/${sizePath}${name}_texture_set_day.webp`,
+      night: `/textures/room/night/${sizePath}${name}_texture_set_night.webp`,
+    };
+    return map;
+  }, {});
+  
+  const loadedTextures = {
+    day: {},
+    night: {},
+  };
 
 Object.entries(textureMap).forEach(([key, paths]) => {
   // Load and configure day texture
@@ -793,6 +788,31 @@ const roomMaterials = {
   Fourth: createMaterialForTextureSet(4),
   Fifth: createMaterialForTextureSet(5),
 };
+
+// Smoke Shader setup
+const smokeGeometry = new THREE.PlaneGeometry(1, 1, 16, 64);
+smokeGeometry.translate(0, 0.5, 0);
+smokeGeometry.scale(0.33, 1, 0.33);
+
+const perlinTexture = textureLoader.load("/shaders/perlin.png");
+perlinTexture.wrapS = THREE.RepeatWrapping;
+perlinTexture.wrapT = THREE.RepeatWrapping;
+
+const smokeMaterial = new THREE.ShaderMaterial({
+  vertexShader: smokeVertexShader,
+  fragmentShader: smokeFragmentShader,
+  uniforms: {
+    uTime: new THREE.Uniform(0),
+    uPerlinTexture: new THREE.Uniform(perlinTexture),
+  },
+  side: THREE.DoubleSide,
+  transparent: true,
+  depthWrite: false,
+});
+
+const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);
+smoke.position.y = 1.83;
+scene.add(smoke);
 
 const videoElement = document.createElement("video");
 videoElement.src = "/textures/video/Screen2.mp4";
@@ -898,6 +918,10 @@ loader.load("/models/wedding_model.glb", (glb) => {
       child.scale.set(0, 0, 0);
     }
 
+    if (child.name.includes("Vase_First_Raycaster_3")) {
+      coffeePosition = child.position.clone();
+    }
+
     Object.keys(textureMap).forEach((key) => {
       if (name.includes(key)) {
         child.material = roomMaterials[key];
@@ -911,6 +935,14 @@ loader.load("/models/wedding_model.glb", (glb) => {
       console.log(`WARNING: Mesh "${name}" tidak punya material. Tampil hitam!`);
     }
   });
+
+  if (coffeePosition) {
+    smoke.position.set(
+      coffeePosition.x,
+      coffeePosition.y + 0.5,
+      coffeePosition.z
+    );
+  }
 
   scene.add(glb.scene);
 });
@@ -932,31 +964,9 @@ function playHoverAnimation(object, isHovering) {
 
   if (object.name.includes("Coffee")) {
     gsap.killTweensOf(smoke.scale);
-    if (isHovering) {
-      gsap.to(smoke.scale, {
-        x: 1.4,
-        y: 1.4,
-        z: 1.4,
-        duration: 0.5,
-        ease: "back.out(2)",
-      });
-    } else {
-      gsap.to(smoke.scale, {
-        x: 1,
-        y: 1,
-        z: 1,
-        duration: 0.3,
-        ease: "back.out(2)",
-      });
-    }
-  }
-
-  if (object.name.includes("Fish")) {
-    scale = 1.2;
   }
 
   if (isHovering) {
-    // Scale animation for all objects
     gsap.to(object.scale, {
       x: object.userData.initialScale.x * scale,
       y: object.userData.initialScale.y * scale,
@@ -964,34 +974,6 @@ function playHoverAnimation(object, isHovering) {
       duration: 0.5,
       ease: "back.out(2)",
     });
-
-    if (object.name.includes("About_Button")) {
-      gsap.to(object.rotation, {
-        x: object.userData.initialRotation.x - Math.PI / 10,
-        duration: 0.5,
-        ease: "back.out(2)",
-      });
-    } else if (
-      object.name.includes("Contact_Button") ||
-      object.name.includes("My_Work_Button") ||
-      object.name.includes("GitHub") ||
-      object.name.includes("YouTube") ||
-      object.name.includes("Twitter")
-    ) {
-      gsap.to(object.rotation, {
-        x: object.userData.initialRotation.x + Math.PI / 10,
-        duration: 0.5,
-        ease: "back.out(2)",
-      });
-    }
-
-    if (object.name.includes("Boba") || object.name.includes("Name_Letter")) {
-      gsap.to(object.position, {
-        y: object.userData.initialPosition.y + 0.2,
-        duration: 0.5,
-        ease: "back.out(2)",
-      });
-    }
   } else {
     // Reset scale for all objects
     gsap.to(object.scale, {
@@ -1001,29 +983,6 @@ function playHoverAnimation(object, isHovering) {
       duration: 0.3,
       ease: "back.out(2)",
     });
-
-    if (
-      object.name.includes("About_Button") ||
-      object.name.includes("Contact_Button") ||
-      object.name.includes("My_Work_Button") ||
-      object.name.includes("GitHub") ||
-      object.name.includes("YouTube") ||
-      object.name.includes("Twitter")
-    ) {
-      gsap.to(object.rotation, {
-        x: object.userData.initialRotation.x,
-        duration: 0.3,
-        ease: "back.out(2)",
-      });
-    }
-
-    if (object.name.includes("Boba") || object.name.includes("Name_Letter")) {
-      gsap.to(object.position, {
-        y: object.userData.initialPosition.y,
-        duration: 0.3,
-        ease: "back.out(2)",
-      });
-    }
   }
 }
 
@@ -1124,11 +1083,29 @@ muteToggleButton.addEventListener(
 );
 
 weddingButton.addEventListener(
-  "touchend",
+  "click",
   (e) => {
     backgroundMusic.volume(0);
     if (touchHappened) return;
-    playIntroAnimation();(e);
+    playIntroAnimation(e);
+  },
+  { passive: false }
+);
+
+weddingButton.addEventListener(
+  "touchend",
+  (e) => {
+    touchHappened = true;
+    playIntroAnimation(e);
+  },
+  { passive: false }
+);
+
+storyButton.addEventListener(
+  "click",
+  (e) => {
+    if (touchHappened) return;
+    playStoryAnimation(e);
   },
   { passive: false }
 );
@@ -1136,9 +1113,26 @@ weddingButton.addEventListener(
 storyButton.addEventListener(
   "touchend",
   (e) => {
-    backgroundMusic.volume(0);
+    touchHappened = true;
+    playStoryAnimation(e);
+  },
+  { passive: false }
+);
+
+locationButton.addEventListener(
+  "click",
+  (e) => {
     if (touchHappened) return;
-    playStoryAnimation();(e);
+    showModal(modals.location);
+  },
+  { passive: false }
+);
+
+locationButton.addEventListener(
+  "touchend",
+  (e) => {
+    touchHappened = true;
+    showModal(modals.location);
   },
   { passive: false }
 );
@@ -1435,6 +1429,7 @@ const render = (timestamp) => {
   // console.log("Controls Target:", controls.target);
 
   const elapsedTime = clock.getElapsedTime(); 
+  smokeMaterial.uniforms.uTime.value = elapsedTime;
 
   // Panggil fungsi dengan waktu sebagai parameter
   applyFlap(leftBirdWing, -1, birdBody, elapsedTime, 'x');

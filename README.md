@@ -22,7 +22,7 @@ npm run dev
 - [Bruno Simon's Room](https://my-room-in-3d.vercel.app/)
 - [Rachel Wei's Room](https://rachelqrwei.ca/)
 - [Nicky Blender](https://www.instagram.com/nicky.blender/?hl=en)
-- [Music](https://youtu.be/eq3C1Uwz6YU)
+- [Music](https://www.youtube.com/watch?v=4Wxi4sVCeo0)
 - [Click SFX](https://uppbeat.io/sfx/category/digital-and-ui/ui)
 - [SVGs](https://www.svgrepo.com/)
 - [Fonts](https://www.fontspace.com/niskala-huruf)
