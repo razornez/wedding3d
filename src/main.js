@@ -540,9 +540,7 @@ function playIntroAnimation() {
   introTimeline = gsap.timeline({ // <<< Pastikan disimpan ke variabel global
     defaults: { duration: 3.0, ease: "power2.inOut" }, 
     onComplete: () => {
-      // Setelah intro selesai, mulai looping animasi
       startLoopingRotation();
-      // Kontrol akan diaktifkan di dalam startLoopingRotation()
     }
   });
 
@@ -1034,7 +1032,7 @@ const handleMuteToggle = (e) => {
 
   gsap.to(muteToggleButton, {
     rotate: -45,
-    scale: 5,
+    scale: 2,
     duration: 0.5,
     ease: "back.out(2)",
     onStart: () => {
@@ -1087,7 +1085,7 @@ weddingButton.addEventListener(
   (e) => {
     backgroundMusic.volume(0);
     if (touchHappened) return;
-    playIntroAnimation(e);
+    startLoopingRotation()
   },
   { passive: false }
 );
@@ -1096,7 +1094,7 @@ weddingButton.addEventListener(
   "touchend",
   (e) => {
     touchHappened = true;
-    playIntroAnimation(e);
+    startLoopingRotation()
   },
   { passive: false }
 );
