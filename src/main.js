@@ -433,52 +433,69 @@ startIconAnimation();
 startFakeLoading();
 
 manager.onLoad = function () {
+  // loadingScreenButton.style.border = "4px solid #e2d393";
+  // loadingScreenButton.style.background = "#fef4d3";
+  loadingScreenButton.style.color = "#5c4a1a";
+  loadingScreenButton.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.1)";
+  // loadingScreenButton.textContent = "Open Invitation";
+  loadingScreenButton.style.cursor = "pointer";
+  loadingScreenButton.style.transition =
+    "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s, color 0.3s";
+
+  let isDisabled = false;
+  let touchHappened = false;
+
   if (fakeProgressTween) {
-      fakeProgressTween.kill();
+    fakeProgressTween.kill();
   }
-  
+
   gsap.to({progress: 0}, {
-      progress: 1.0,
-      duration: 0.5,
-      ease: "power2.out",
-      onUpdate: function() {
-          updateLoadingProgress(this.targets()[0].progress);
-      },
-      onComplete: () => {
-          updateLoadingProgress(1.0);
-      }
+    progress: 1.0,
+    duration: 0.5,
+    ease: "power2.out",
+    onUpdate: function() {
+        updateLoadingProgress(this.targets()[0].progress);
+    },
+    onComplete: () => {
+        updateLoadingProgress(1.0);
+    }
   });
 
-
-
   function handleEnter() {
-      if (isDisabled) return;
-      isDisabled = true;
-      loadingScreenButton.style.cursor = "default";
-      loadingScreenButton.style.color = "#7a6b2f";
-      loadingScreenButton.style.boxShadow = "none";
-      loadingScreenButton.style.margin = "auto";
-      loadingScreenButton.textContent = "~ Welcome ~";
+    if (isDisabled) return;
 
-      toggleFavicons?.();
-      backgroundMusic?.play();
-      playReveal?.();
-      playIntroAnimation();
+    isDisabled = true;
+    loadingScreenButton.style.cursor = "default";
+    // loadingScreenButton.style.border = "4px solid #c8b76a";
+    // loadingScreenButton.style.background = "#fdf6e3";
+    loadingScreenButton.style.color = "#7a6b2f";
+    loadingScreenButton.style.boxShadow = "none";
+    loadingScreenButton.style.margin = "auto";
+    loadingScreenButton.textContent = "~ Welcome ~";
+
+    toggleFavicons?.();
+    backgroundMusic?.play();
+    playReveal?.();
+    playIntroAnimation();
   }
-  
-  // --- Event Listeners untuk Tombol ---
-  loadingScreenButton.addEventListener("mouseenter", () => { /* Logic dihapus karena ditangani CSS */ });
-  loadingScreenButton.addEventListener("mouseleave", () => { /* Logic dihapus karena ditangani CSS */ });
+
+  loadingScreenButton.addEventListener("mouseenter", () => {
+    if (!isDisabled) loadingScreenButton.style.transform = "scale(1.1)";
+  });
+
+  loadingScreenButton.addEventListener("mouseleave", () => {
+    loadingScreenButton.style.transform = "scale(1)";
+  });
 
   loadingScreenButton.addEventListener("touchend", (e) => {
-      touchHappened = true;
-      e.preventDefault();
-      handleEnter();
+    touchHappened = true;
+    e.preventDefault();
+    handleEnter();
   });
 
   loadingScreenButton.addEventListener("click", (e) => {
-      if (touchHappened) return;
-      handleEnter();
+    if (touchHappened) return;
+    handleEnter();
   });
 };
 
