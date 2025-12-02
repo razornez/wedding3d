@@ -346,23 +346,37 @@ const mobileInstructions = document.querySelector(".mobile-instructions");
 const manIcon = document.getElementById('manIcon');
 const progressBar = document.getElementById('progressBar');
 const loadingPercentage = document.getElementById('loadingPercentage');
-const MAX_ICON_LEFT_POSITION = 95;
+const MAX_ICON_LEFT_POSITION = 95; 
+let womenIconAnimation;
 
-if (loadingScreenButton) {
-  loadingScreenButton.style.display = 'none';
-}
+const startIconAnimation = () => {
+  if (!womenIcon) return;
+  
+  womenIconAnimation = gsap.to(womenIcon, {
+      scale: 1.15, // Membesar hingga 115% dari ukuran asli
+      duration: 0.8, // Durasi 0.8 detik
+      ease: "power1.inOut",
+      yoyo: true, // Kembali ke nilai awal (mengecil lagi)
+      repeat: -1, // Ulangi tanpa batas
+  });
+};
 
+const stopIconAnimation = () => {
+  if (womenIconAnimation) {
+      womenIconAnimation.kill(); // Menghentikan animasi GSAP
+      // Opsional: kembalikan skala ke 1 (normal) jika belum
+      gsap.to(womenIcon, { scale: 1, duration: 0.3 });
+  }
+};
 
 const updateLoadingProgress = (progress) => {
   if (!manIcon || !progressBar || !loadingPercentage) return;
 
   const percentage = Math.round(progress * 100);
-  
-  // Hitung posisi ikon pria: Gunakan Math.min() untuk membatasi nilai maksimum
   const iconLeftPosition = Math.min(percentage, MAX_ICON_LEFT_POSITION);
   
   gsap.to(manIcon, {
-      left: `${iconLeftPosition}%`, // Gunakan posisi yang dibatasi
+      left: `${iconLeftPosition}%`,
       duration: 0.5,
       ease: "power2.out",
   });
@@ -377,6 +391,7 @@ const updateLoadingProgress = (progress) => {
   });
 
   if (progress >= 1) {
+      stopIconAnimation(); 
       gsap.to('.loading-bar-wrapper', {
           opacity: 0, 
           duration: 0.5, 
@@ -396,10 +411,11 @@ const updateLoadingProgress = (progress) => {
       });
   }
 };
+startIconAnimation();
 
 manager.onLoad = function () {
-  loadingScreenButton.style.border = "4px solid #e2d393";
-  loadingScreenButton.style.background = "#fef4d3";
+  // loadingScreenButton.style.border = "4px solid #e2d393";
+  // loadingScreenButton.style.background = "#fef4d3";
   loadingScreenButton.style.color = "#5c4a1a";
   loadingScreenButton.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.1)";
   // loadingScreenButton.textContent = "Open Invitation";
@@ -410,20 +426,20 @@ manager.onLoad = function () {
   let isDisabled = false;
   let touchHappened = false;
 
-  updateLoadingProgress(0.80);
-
+  updateLoadingProgress(0.80); 
+    
   setTimeout(() => {
-    gsap.to({ progress: 0.8 }, {
-        progress: 1.0,
-        duration: 1.0, 
-        ease: "power2.out",
-        onUpdate: function() {
-            updateLoadingProgress(this.targets()[0].progress);
-        },
-        onComplete: () => {
-            updateLoadingProgress(1.0);
-        }
-    });
+      gsap.to({ progress: 0.8 }, {
+          progress: 1.0,
+          duration: 1.0, 
+          ease: "power2.out",
+          onUpdate: function() {
+              updateLoadingProgress(this.targets()[0].progress);
+          },
+          onComplete: () => {
+              updateLoadingProgress(1.0);
+          }
+      });
 
   }, 1000);
 
@@ -432,14 +448,12 @@ manager.onLoad = function () {
 
     isDisabled = true;
     loadingScreenButton.style.cursor = "default";
-    loadingScreenButton.style.border = "4px solid #c8b76a";
-    loadingScreenButton.style.background = "#fdf6e3";
+    // loadingScreenButton.style.border = "4px solid #c8b76a";
+    // loadingScreenButton.style.background = "#fdf6e3";
     loadingScreenButton.style.color = "#7a6b2f";
     loadingScreenButton.style.boxShadow = "none";
+    loadingScreenButton.style.margin = "auto";
     loadingScreenButton.textContent = "~ Welcome ~";
-
-    loadingScreen.style.background = "#fdf6e3";
-    document.querySelector(".instructions").style.color = "#8c7b45";
 
     toggleFavicons?.();
     backgroundMusic?.play();
@@ -471,25 +485,19 @@ function playReveal() {
   const tl = gsap.timeline();
 
   tl.to(loadingScreen, {
-    scale: 0.5,
-    duration: 1.2,
-    delay: 0.25,
-    ease: "back.in(1.8)",
-  }).to(
-    loadingScreen,
-    {
-      y: "200vh",
-      transform: "perspective(1000px) rotateX(45deg) rotateY(-35deg)",
-      duration: 1.2,
-      ease: "back.in(1.8)",
+      scale: 0.95, 
+      opacity: 0,
+      
+      y: "-100vh", 
+      
+      duration: 2.0, // Durasi 1.0 detik
+      ease: "power3.in", // Gunakan easing 'power3.in' agar cepat di akhir (seperti ditarik)
+      
       onComplete: () => {
-        isModalOpen = false;
-        // playIntroAnimation();
-        loadingScreen.remove();
+          isModalOpen = false;
+          loadingScreen.remove();
       },
-    },
-    "-=0.1"
-  );
+  });
 }
 
 // === START: FUNGSI ANIMASI KAMERA BARU ===

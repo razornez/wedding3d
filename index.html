@@ -25,22 +25,24 @@
   </head>
   <body class="light-theme">
     <div class="loading-screen">
-      <div class="diorama-wrapper">
-        <img src="/images/diorama_welcome.webp" alt="3D Diorama" class="diorama-image" />
-      </div>
       <div class="loading-content">
         <h1 class="welcome-title">Welcome to My Interactive Room</h1>
         <p class="welcome-subtitle">An experimental 3D portfolio built with Blender & Three.js</p>
     
-        <button class="loading-screen-button">Enter Room</button>
-      </div>
+        <div class="loading-bar-wrapper">
+            <img src="/images/man.webp" alt="Groom Icon" class="man-icon" id="manIcon" />
+            
+            <img src="/images/women.webp" alt="Bride Icon" class="women-icon" id="womenIcon" />
     
-      <div class="instructions">
-        <p class="desktop-instructions">🖱️ Use left/right click and scroll to navigate</p>
-        <p class="mobile-instructions">📱 Use one or two fingers to explore</p>
+            <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+    
+            <p class="loading-percentage" id="loadingPercentage">0%</p>
+        </div>
+        <button class="loading-screen-button" style="display: none;">Loading</button> 
       </div>
     </div>
-    
     <div class="overlay"></div>
 
     <button class="theme-toggle-button toggle-buttons" style="display: none;">
