@@ -343,19 +343,89 @@ const loadingScreen = document.querySelector(".loading-screen");
 const loadingScreenButton = document.querySelector(".loading-screen-button");
 const desktopInstructions = document.querySelector(".desktop-instructions");
 const mobileInstructions = document.querySelector(".mobile-instructions");
+const manIcon = document.getElementById('manIcon');
+const progressBar = document.getElementById('progressBar');
+const loadingPercentage = document.getElementById('loadingPercentage');
+const MAX_ICON_LEFT_POSITION = 95;
+
+if (loadingScreenButton) {
+  loadingScreenButton.style.display = 'none';
+}
+
+
+const updateLoadingProgress = (progress) => {
+  if (!manIcon || !progressBar || !loadingPercentage) return;
+
+  const percentage = Math.round(progress * 100);
+  
+  // Hitung posisi ikon pria: Gunakan Math.min() untuk membatasi nilai maksimum
+  const iconLeftPosition = Math.min(percentage, MAX_ICON_LEFT_POSITION);
+  
+  gsap.to(manIcon, {
+      left: `${iconLeftPosition}%`, // Gunakan posisi yang dibatasi
+      duration: 0.5,
+      ease: "power2.out",
+  });
+
+  gsap.to(progressBar, {
+      width: `${percentage}%`,
+      duration: 0.5,
+      ease: "power2.out",
+      onUpdate: () => {
+          loadingPercentage.textContent = `${percentage}%`;
+      }
+  });
+
+  if (progress >= 1) {
+      gsap.to('.loading-bar-wrapper', {
+          opacity: 0, 
+          duration: 0.5, 
+          onComplete: () => {
+              const loadingBarWrapper = document.querySelector('.loading-bar-wrapper');
+              if (loadingBarWrapper) loadingBarWrapper.style.display = 'none';
+
+              if (loadingScreenButton) {
+                  loadingScreenButton.textContent = "Open Invitation"; 
+                  loadingScreenButton.style.display = 'block';
+                  gsap.fromTo(loadingScreenButton, 
+                      { opacity: 0, y: 10 }, 
+                      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
+                  );
+              }
+          }
+      });
+  }
+};
 
 manager.onLoad = function () {
   loadingScreenButton.style.border = "4px solid #e2d393";
   loadingScreenButton.style.background = "#fef4d3";
   loadingScreenButton.style.color = "#5c4a1a";
   loadingScreenButton.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.1)";
-  loadingScreenButton.textContent = "Enter Room";
+  // loadingScreenButton.textContent = "Open Invitation";
   loadingScreenButton.style.cursor = "pointer";
   loadingScreenButton.style.transition =
     "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s, color 0.3s";
 
   let isDisabled = false;
   let touchHappened = false;
+
+  updateLoadingProgress(0.80);
+
+  setTimeout(() => {
+    gsap.to({ progress: 0.8 }, {
+        progress: 1.0,
+        duration: 1.0, 
+        ease: "power2.out",
+        onUpdate: function() {
+            updateLoadingProgress(this.targets()[0].progress);
+        },
+        onComplete: () => {
+            updateLoadingProgress(1.0);
+        }
+    });
+
+  }, 1000);
 
   function handleEnter() {
     if (isDisabled) return;
@@ -366,7 +436,7 @@ manager.onLoad = function () {
     loadingScreenButton.style.background = "#fdf6e3";
     loadingScreenButton.style.color = "#7a6b2f";
     loadingScreenButton.style.boxShadow = "none";
-    loadingScreenButton.textContent = "~ Enjoy ~";
+    loadingScreenButton.textContent = "~ Welcome ~";
 
     loadingScreen.style.background = "#fdf6e3";
     document.querySelector(".instructions").style.color = "#8c7b45";
