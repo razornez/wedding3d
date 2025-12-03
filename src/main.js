@@ -29,6 +29,7 @@ let birdBody;
 let leafObjects = [];
 const navButtons = document.querySelectorAll(".nav-button");
 let coffeePosition;
+let flower1;
 /**  -------------------------- Audio setup -------------------------- */
 
 // Background Music
