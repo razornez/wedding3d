@@ -35,6 +35,7 @@ let coffeePosition;
 let isMusicFaded = false;
 const MUSIC_FADE_TIME = 500;
 const BACKGROUND_MUSIC_VOLUME = 0.8;
+const QUIET_VOLUME = 0.0001;
 const FADED_VOLUME = 0;
 
 // Generate a random number between 1 and 6
@@ -365,6 +366,11 @@ let womenIconAnimation;
 let fakeProgressTween;
 let currentBgLevel = 1;
 
+const countdownWrapper = document.getElementById('countdown-wrapper');
+const SEVEN_DAYS_IN_MS = 7 * 24 * 60 * 60 * 1000;
+const WEDDING_DATE = new Date(Date.now() + SEVEN_DAYS_IN_MS);
+let countdownInterval;
+
 const changeBackgroundLayer = (newLevel) => {
   if (newLevel === currentBgLevel || !bgLayers[newLevel]) return; 
 
@@ -460,8 +466,60 @@ const updateLoadingProgress = (progress) => {
   }
 };
 
+const animateValuePop = (elementId) => {
+  const el = document.getElementById(elementId);
+  if (el) {
+      gsap.fromTo(el, 
+          { scale: 1.2, color: 'white' }, // Pop dan flash merah
+          { scale: 1, color: '#fdf5e6', duration: 0.3, ease: "back.out(2)" } // Kembali normal
+      );
+  }
+};
+
+const updateCountdown = () => {
+  const now = new Date().getTime();
+  const distance = WEDDING_DATE.getTime() - now;
+
+  if (distance < 0) {
+      clearInterval(countdownInterval);
+      if (countdownWrapper) {
+          // countdownWrapper.innerHTML = `<div class="countdown-label">🎉 WE ARE MARRIED! 🎉</div>`;
+          gsap.to(countdownWrapper, { scale: 1.1, duration: 0.5, yoyo: true, repeat: -1 });
+      }
+      return;
+  }
+
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  
+  const format = (n) => (n < 10 ? '0' : '') + n;
+  
+  const daysEl = document.getElementById('days-value');
+  const hoursEl = document.getElementById('hours-value');
+  const minutesEl = document.getElementById('minutes-value');
+  const secondsEl = document.getElementById('seconds-value');
+
+  if (daysEl && hoursEl && minutesEl && secondsEl) {
+      daysEl.textContent = format(days);
+      hoursEl.textContent = format(hours);
+      minutesEl.textContent = format(minutes);
+      secondsEl.textContent = format(seconds);
+
+      animateValuePop('seconds-value');
+  }
+};
+
+const initCountdown = () => {
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
+  gsap.to(countdownWrapper, { opacity: 1, duration: 1, delay: 0.5 });
+};
+
 startIconAnimation();
 startFakeLoading();
+initCountdown();
 
 manager.onLoad = function () {
   // loadingScreenButton.style.border = "4px solid #e2d393";
@@ -1156,35 +1214,43 @@ const handleMuteToggle = (e) => {
   e.preventDefault();
 
   isMuted = !isMuted;
-  updateMuteState(isMuted);
   buttonSounds.click.play();
+  
+  if (typeof Howler !== 'undefined') {
+      Howler.mute(isMuted);
+  }
+
+  if (backgroundMusic) {
+      const targetVolume = isMuted ? QUIET_VOLUME : BACKGROUND_MUSIC_VOLUME;
+      backgroundMusic.volume(targetVolume); 
+  }
 
   gsap.to(muteToggleButton, {
-    rotate: -45,
-    scale: 2,
-    duration: 0.5,
-    ease: "back.out(2)",
-    onStart: () => {
-      if (!isMuted) {
-        soundOffSvg.style.display = "none";
-        soundOnSvg.style.display = "block";
-      } else {
-        soundOnSvg.style.display = "none";
-        soundOffSvg.style.display = "block";
-      }
+      rotate: -45,
+      scale: 2,
+      duration: 0.5,
+      ease: "back.out(2)",
+      onStart: () => {
+          if (!isMuted) {
+              soundOffSvg.style.display = "none";
+              soundOnSvg.style.display = "block";
+          } else {
+              soundOnSvg.style.display = "none";
+              soundOffSvg.style.display = "block";
+          }
 
-      gsap.to(muteToggleButton, {
-        rotate: 0,
-        scale: 1,
-        duration: 0.5,
-        ease: "back.out(2)",
-        onComplete: () => {
-          gsap.set(muteToggleButton, {
-            clearProps: "all",
+          gsap.to(muteToggleButton, {
+              rotate: 0,
+              scale: 1,
+              duration: 0.5,
+              ease: "back.out(2)",
+              onComplete: () => {
+                  gsap.set(muteToggleButton, {
+                      clearProps: "all",
+                  });
+              },
           });
-        },
-      });
-    },
+      },
   });
 };
 
