@@ -343,43 +343,66 @@ const loadingScreen = document.querySelector(".loading-screen");
 const loadingScreenButton = document.querySelector(".loading-screen-button");
 const desktopInstructions = document.querySelector(".desktop-instructions");
 const mobileInstructions = document.querySelector(".mobile-instructions");
-let fakeProgressTween;
+const bgLayer1 = document.getElementById('bgLayer1');
+const bgLayer2 = document.getElementById('bgLayer2');
+const bgLayer3 = document.getElementById('bgLayer3');
+const bgLayer4 = document.getElementById('bgLayer4');
+const bgLayers = {
+    1: bgLayer1,
+    2: bgLayer2,
+    3: bgLayer3,
+    4: bgLayer4,
+};
 const manIcon = document.getElementById('manIcon');
 const progressBar = document.getElementById('progressBar');
 const loadingPercentage = document.getElementById('loadingPercentage');
-const MAX_ICON_LEFT_POSITION = 95; 
-let womenIconAnimation;
 const womenIcon = document.getElementById('womenIcon');
+
+const MAX_ICON_LEFT_POSITION = 90; 
+const MAX_FAKE_PROGRESS = 0.90; 
+
+let womenIconAnimation;
+let fakeProgressTween;
+let currentBgLevel = 1;
+
+const changeBackgroundLayer = (newLevel) => {
+  if (newLevel === currentBgLevel || !bgLayers[newLevel]) return; 
+
+  const currentLayer = bgLayers[currentBgLevel];
+  const nextLayer = bgLayers[newLevel];
+
+  gsap.timeline()
+      .to(currentLayer, { opacity: 0, duration: 0.001, ease: "power2.inOut" }, 0) // Fade out layer lama
+      .to(nextLayer, { opacity: 1, duration: 0.001, ease: "power2.inOut" }, 0); // Fade in layer baru
+
+  currentBgLevel = newLevel;
+};
 
 const startIconAnimation = () => {
   if (!womenIcon) return;
-  
   womenIconAnimation = gsap.to(womenIcon, {
-      scale: 1.15, // Membesar hingga 115% dari ukuran asli
-      duration: 0.8, // Durasi 0.8 detik
+      scale: 1.15,
+      duration: 0.8,
       ease: "power1.inOut",
-      yoyo: true, // Kembali ke nilai awal (mengecil lagi)
-      repeat: -1, // Ulangi tanpa batas
+      yoyo: true,
+      repeat: -1,
   });
 };
 
 const stopIconAnimation = () => {
   if (womenIconAnimation) {
-      womenIconAnimation.kill(); // Menghentikan animasi GSAP
-      // Opsional: kembalikan skala ke 1 (normal) jika belum
+      womenIconAnimation.kill();
       gsap.to(womenIcon, { scale: 1, duration: 0.3 });
   }
 };
 
 const startFakeLoading = () => {
   const progressObject = { value: 0 };
-  const MAX_FAKE_PROGRESS = 0.90; // Batas progress palsu 90%
   
-  // Durasi 8 detik untuk mencapai 90% (8 detik adalah estimasi waktu load yang panjang)
   fakeProgressTween = gsap.to(progressObject, {
       value: MAX_FAKE_PROGRESS, 
-      duration: 8, 
-      ease: "linear", // Progres linier agar terasa stabil
+      duration: 15, 
+      ease: "linear",
       onUpdate: () => {
           updateLoadingProgress(progressObject.value);
       },
@@ -391,6 +414,14 @@ const updateLoadingProgress = (progress) => {
 
   const percentage = Math.round(progress * 100);
   const iconLeftPosition = Math.min(percentage, MAX_ICON_LEFT_POSITION);
+  
+  if (percentage >= 95 && currentBgLevel < 4) {
+      changeBackgroundLayer(4);
+  } else if (percentage >= 60 && currentBgLevel < 3) {
+      changeBackgroundLayer(3);
+  } else if (percentage >= 30 && currentBgLevel < 2) {
+      changeBackgroundLayer(2);
+  } 
   
   gsap.to(manIcon, {
       left: `${iconLeftPosition}%`,
@@ -449,16 +480,18 @@ manager.onLoad = function () {
     fakeProgressTween.kill();
   }
 
-  gsap.to({progress: 0}, {
-    progress: 1.0,
-    duration: 0.5,
-    ease: "power2.out",
-    onUpdate: function() {
-        updateLoadingProgress(this.targets()[0].progress);
-    },
-    onComplete: () => {
-        updateLoadingProgress(1.0);
-    }
+  let startProgress = (currentBgLevel === 4) ? 0.90 : 0; 
+    
+  gsap.to({progress: startProgress}, {
+      progress: 1.0,
+      duration: 0.5,
+      ease: "power2.out",
+      onUpdate: function() {
+          updateLoadingProgress(this.targets()[0].progress);
+      },
+      onComplete: () => {
+          updateLoadingProgress(1.0);
+      }
   });
 
   function handleEnter() {

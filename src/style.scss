@@ -769,7 +769,7 @@ ul {
   @include vars.centered;
   position: fixed;
   inset: 0; 
-  background-image: url("/images/background.webp"); /* Ganti path sesuai lokasi file Anda */
+  // background-image: url("/images/bg1.webp");
   background-size: cover; /* PASTIKAN gambar selalu menutupi seluruh area */
   background-position: center; /* Pusatkan gambar */
   background-repeat: no-repeat; /* Cegah pengulangan gambar */
@@ -782,6 +782,32 @@ ul {
   // border: 8px solid vars.$base-purple;
   // border-radius: 48px; 
   transform: perspective(1000px);
+}
+
+.loading-bg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  z-index: -1;
+}
+
+#bgLayer1 {
+  background-image: url('/images/bg1.webp'); 
+  opacity: 1; /* Layer 1 (Default) terlihat di awal */
+}
+#bgLayer2 {
+  background-image: url('/images/bg2.webp');
+}
+#bgLayer3 {
+  background-image: url('/images/bg3.webp');
+}
+#bgLayer4 {
+  background-image: url('/images/bg4.webp');
 }
 
 .loading-content {
