@@ -250,6 +250,13 @@ navButtons.forEach(button => {
           showModal(modals.location);
       });
   }
+
+  else if (modalType === 'message') { 
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeOpenModal();
+    });
+  }
   
   if (button.classList.contains('message')) {
        button.addEventListener('click', (e) => {
@@ -1016,13 +1023,7 @@ videoTexture.rotation = Math.PI / 2;
 
 /** -------------------------- Model and Mesh Setup -------------------------- */
 
-// LOL DO NOT DO THIS USE A FUNCTION TO AUTOMATE THIS PROCESS HAHAHAAHAHAHAHAHAHA
-let hourHand;
-let minuteHand;
 
-// Load a repeating normal map (e.g. waternormals.jpg)
-const waterDayColor = new THREE.Color(0x558bc8);
-const waterNightColor = new THREE.Color(0x0a1e3f);
 
 loader.load("/models/wedding_model.glb", (glb) => {
   glb.scene.traverse((child) => {
@@ -1105,6 +1106,11 @@ loader.load("/models/wedding_model.glb", (glb) => {
 
     if (child.name.includes("Vase_First_Raycaster_3")) {
       coffeePosition = child.position.clone();
+    }
+
+    if (child.name === "Flower_Third_Raycaster") {
+      flower1 = new THREE.Vector3();
+      child.getWorldPosition(flower1);
     }
 
     Object.keys(textureMap).forEach((key) => {
@@ -1326,6 +1332,24 @@ locationButton.addEventListener(
   (e) => {
     touchHappened = true;
     showModal(modals.location);
+  },
+  { passive: false }
+);
+
+messageButton.addEventListener(
+  "click",
+  (e) => {
+    if (touchHappened) return;
+
+  },
+  { passive: false }
+);
+
+messageButton.addEventListener(
+  "touchend",
+  (e) => {
+    touchHappened = true;
+
   },
   { passive: false }
 );
