@@ -1,6 +1,6 @@
-# Razornez Room Portfolio
+# 3D Wedding
 
-**[Live site](https://razornez-room.vercel.app/)**
+**[Live site](https://wedding3d-ke6w.vercel.app//)**
 
 This repo contains code of Razornez Room Folio using Blender and Three js. 
 
@@ -17,13 +17,11 @@ npm run dev
 
 - None so far other than reformatting
 
-# Inspo & Credits!!!
+# Info & Credits!!!
 
 - [Bruno Simon's Room](https://my-room-in-3d.vercel.app/)
-- [Rachel Wei's Room](https://rachelqrwei.ca/)
-- [Nicky Blender](https://www.instagram.com/nicky.blender/?hl=en)
 - [Music](https://www.youtube.com/watch?v=4Wxi4sVCeo0)
 - [Click SFX](https://uppbeat.io/sfx/category/digital-and-ui/ui)
 - [SVGs](https://www.svgrepo.com/)
-- [Fonts](https://www.fontspace.com/niskala-huruf)
+- [Fonts](https://www.fontspace.com/bangers)
 
