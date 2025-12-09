@@ -2,7 +2,7 @@
 
 **[Live site](https://wedding3d-ke6w.vercel.app//)**
 
-This repo contains code of Razornez Room Folio using Blender and Three js. 
+This repo contains code of 3D Wedding web using Blender and Three js. 
 
 ![Page screenshot](public/media/isometric2e.webp?raw=true "Page screenshot")
 
